@@ -31,7 +31,7 @@ $empresas = $pdo->query("SELECT * FROM empresa ORDER BY nombre_empresa")->fetchA
     <div class="box">
 
         <div class="box-header with-border">
-            <a href="index.php?page=Empresa" class="btn btn-success">
+            <a href="index.php?page=Empresa" class="btn btn-primary">
                 <i class="fa fa-plus"></i> Nueva Empresa
             </a>
         </div>

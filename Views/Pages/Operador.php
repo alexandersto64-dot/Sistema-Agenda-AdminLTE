@@ -35,10 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="row">
         <div class="col-md-6 col-md-offset-3">
 
-            <div class="box box-warning">
+            <div class="box box-primary">
 
-                <div class="box-header with-border bg-yellow">
-                    <h3 class="box-title text-black">
+                <div class="box-header with-border bg-blue">
+                    <h3 class="box-title text-white">
                         <i class="fa fa-phone-square"></i>
                         Nuevo Operador
                     </h3>
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <a href="index.php?Pages=Listar_Operador" class="btn btn-default btn-lg">
                             <i class="fa fa-arrow-left"></i> Cancelar
                         </a>
-                        <button type="submit" class="btn btn-warning btn-lg">
+                        <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fa fa-save"></i> Guardar
                         </button>
                     </div>

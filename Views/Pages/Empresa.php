@@ -44,10 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="row">
         <div class="col-md-6 col-md-offset-3">
 
-            <div class="box box-success">
+            <div class="box box-primary">
 
-                <div class="box-header with-border">
-                    <h3 class="box-title">
+                <div class="box-header with-border bg-blue">
+                    <h3 class="box-title text-white">
                         <i class="fa fa-building"></i>
                         Nueva Empresa
                     </h3>
@@ -58,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
                             <span aria-hidden="true">&times;</span>
                         </button>
+
                         <i class="fa fa-check-circle"></i>
                         <strong>¡Éxito!</strong> La empresa fue registrada correctamente.
                     </div>
@@ -68,13 +69,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="box-body">
 
                         <div class="form-group <?= isset($errors['nombre_empresa']) ? 'has-error' : '' ?>">
-                            <label><i class="fa fa-briefcase"></i> Nombre Empresa</label>
+                            <label>
+                                <i class="fa fa-briefcase"></i>
+                                Nombre Empresa
+                            </label>
+
                             <input type="text"
                                 class="form-control input-lg"
                                 name="nombre_empresa"
                                 placeholder="Ingrese nombre de la empresa"
                                 maxlength="60"
                                 value="<?= htmlspecialchars($nombre_empresa) ?>">
+
                             <?php if (isset($errors['nombre_empresa'])): ?>
                                 <span class="help-block">
                                     <i class="fa fa-exclamation-circle"></i>
@@ -84,13 +90,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
 
                         <div class="form-group <?= isset($errors['direccion']) ? 'has-error' : '' ?>">
-                            <label><i class="fa fa-map-marker"></i> Dirección</label>
+                            <label>
+                                <i class="fa fa-map-marker"></i>
+                                Dirección
+                            </label>
+
                             <input type="text"
                                 class="form-control input-lg"
                                 name="direccion"
                                 placeholder="Ingrese dirección"
                                 maxlength="80"
                                 value="<?= htmlspecialchars($direccion) ?>">
+
                             <?php if (isset($errors['direccion'])): ?>
                                 <span class="help-block">
                                     <i class="fa fa-exclamation-circle"></i>
@@ -100,13 +111,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
 
                         <div class="form-group <?= isset($errors['telefono']) ? 'has-error' : '' ?>">
-                            <label><i class="fa fa-phone"></i> Teléfono</label>
+                            <label>
+                                <i class="fa fa-phone"></i>
+                                Teléfono
+                            </label>
+
                             <input type="text"
                                 class="form-control input-lg"
                                 name="telefono"
                                 placeholder="Ingrese teléfono"
                                 maxlength="11"
                                 value="<?= htmlspecialchars($telefono) ?>">
+
                             <?php if (isset($errors['telefono'])): ?>
                                 <span class="help-block">
                                     <i class="fa fa-exclamation-circle"></i>
@@ -118,12 +134,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div class="box-footer text-right">
+
                         <a href="index.php?Pages=Listar_Empresa" class="btn btn-default btn-lg">
                             <i class="fa fa-arrow-left"></i> Cancelar
                         </a>
-                        <button type="submit" class="btn btn-success btn-lg">
+
+                        <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fa fa-save"></i> Guardar
                         </button>
+
                     </div>
 
                 </form>

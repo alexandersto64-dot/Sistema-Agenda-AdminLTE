@@ -10,7 +10,7 @@ class Conexion
 
             $link = new PDO(
 
-                "mysql:host=localhost;dbname=bd_agenda2026",
+                "mysql:host=localhost;dbname=bdagenda2026",
                 "root",
                 ""
 

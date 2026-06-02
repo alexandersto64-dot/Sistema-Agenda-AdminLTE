@@ -2,21 +2,51 @@
 require_once "Models/Conexion.php";
 
 $pdo = Conexion::conectar();
+$rol = $_SESSION["rol"];
 
-$total_operadores = $pdo->query("SELECT COUNT(*) FROM operador")->fetchColumn();
-$total_empresas   = $pdo->query("SELECT COUNT(*) FROM empresa")->fetchColumn();
-$total_grupos     = $pdo->query("SELECT COUNT(*) FROM grupo_contacto")->fetchColumn();
-$total_contactos  = $pdo->query("SELECT COUNT(*) FROM contacto")->fetchColumn();
+/* ================================================
+   DATOS SEGÚN ROL
+   - Admin: ve estadísticas globales y todos los contactos
+   - Usuario: ve solo un mensaje de bienvenida y sus datos
+   ================================================ */
 
-$ultimos = $pdo->query("
-    SELECT c.nombres, c.apellidos, c.telefono_movil, c.fecha_registro,
-           e.nombre_empresa, g.nombre_grupo
-    FROM contacto c
-    JOIN empresa e        ON c.id_empresa  = e.id_empresa
-    JOIN grupo_contacto g ON c.id_grupo    = g.id_grupo
-    ORDER BY c.fecha_registro DESC
-    LIMIT 5
-")->fetchAll(PDO::FETCH_ASSOC);
+if ($rol === "Administrador") {
+
+    $total_operadores = $pdo->query("SELECT COUNT(*) FROM operador")->fetchColumn();
+    $total_empresas   = $pdo->query("SELECT COUNT(*) FROM empresa")->fetchColumn();
+    $total_grupos     = $pdo->query("SELECT COUNT(*) FROM grupo_contacto")->fetchColumn();
+    $total_contactos  = $pdo->query("SELECT COUNT(*) FROM contacto")->fetchColumn();
+
+    $ultimos = $pdo->query("
+        SELECT c.nombres, c.apellidos, c.telefono_movil, c.fecha_registro,
+               e.nombre_empresa, g.nombre_grupo
+        FROM contacto c
+        JOIN empresa e        ON c.id_empresa  = e.id_empresa
+        JOIN grupo_contacto g ON c.id_grupo    = g.id_grupo
+        ORDER BY c.fecha_registro DESC
+        LIMIT 5
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+} else {
+
+    /* Usuario normal: estadísticas neutrales */
+    $total_operadores = $pdo->query("SELECT COUNT(*) FROM operador")->fetchColumn();
+    $total_empresas   = $pdo->query("SELECT COUNT(*) FROM empresa")->fetchColumn();
+    $total_grupos     = $pdo->query("SELECT COUNT(*) FROM grupo_contacto")->fetchColumn();
+    $total_contactos  = $pdo->query("SELECT COUNT(*) FROM contacto")->fetchColumn();
+
+    /* Solo los últimos 5 contactos generales (sin botones de admin) */
+    $ultimos = $pdo->query("
+        SELECT c.nombres, c.apellidos, c.telefono_movil, c.fecha_registro,
+               e.nombre_empresa, g.nombre_grupo
+        FROM contacto c
+        JOIN empresa e        ON c.id_empresa  = e.id_empresa
+        JOIN grupo_contacto g ON c.id_grupo    = g.id_grupo
+        ORDER BY c.fecha_registro DESC
+        LIMIT 5
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+}
 ?>
 
 <style>
@@ -285,6 +315,19 @@ $ultimos = $pdo->query("
     .anim-2 { animation: fadeUp .5s .1s ease both; }
     .anim-3 { animation: fadeUp .5s .2s ease both; }
     .anim-4 { animation: fadeUp .5s .3s ease both; }
+
+    /* Badge de rol en el hero */
+    .rol-badge {
+        display: inline-block;
+        padding: 3px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 8px;
+        vertical-align: middle;
+    }
+    .rol-badge.admin  { background: rgba(251,191,36,.25); border: 1px solid rgba(251,191,36,.4); }
+    .rol-badge.usuario { background: rgba(167,243,208,.25); border: 1px solid rgba(167,243,208,.4); }
 </style>
 
 <section class="content dash-wrap">
@@ -298,14 +341,27 @@ $ultimos = $pdo->query("
         <h1>
             <i class="fa fa-address-book" style="margin-right:10px;"></i>
             Sistema de Agenda 2026
+            <?php if ($rol === "Administrador"): ?>
+                <span class="rol-badge admin"><i class="fa fa-shield"></i> Admin</span>
+            <?php else: ?>
+                <span class="rol-badge usuario"><i class="fa fa-user"></i> Usuario</span>
+            <?php endif; ?>
         </h1>
-        <p>Administra operadores, empresas, grupos y contactos de manera rápida y segura.</p>
+        <p>
+            <?php if ($rol === "Administrador"): ?>
+                Administra operadores, empresas, grupos y contactos de manera rápida y segura.
+            <?php else: ?>
+                Bienvenido/a, <?= htmlspecialchars($_SESSION["nombre"]) ?>. Aquí puedes consultar tu agenda de contactos.
+            <?php endif; ?>
+        </p>
         <i class="fa fa-address-book hero-icon"></i>
     </div>
-    
+
     <!-- TARJETAS ESTADÍSTICAS -->
     <div class="row anim-2">
 
+        <?php if ($rol === "Administrador"): ?>
+        <!-- Admin: ve todos los módulos con links -->
         <div class="col-lg-3 col-sm-6">
             <a href="index.php?Pages=Listar_Operador" class="stat-card sc-blue">
                 <div class="sc-num counter" data-target="<?= $total_operadores ?>">0</div>
@@ -346,9 +402,49 @@ $ultimos = $pdo->query("
             </a>
         </div>
 
+        <?php else: ?>
+        <!-- Usuario: ve solo las tarjetas informativas sin links de admin -->
+        <div class="col-lg-3 col-sm-6">
+            <div class="stat-card sc-blue" style="cursor:default;">
+                <div class="sc-num counter" data-target="<?= $total_operadores ?>">0</div>
+                <div class="sc-label">Operadores</div>
+                <div class="sc-sub">Registrados en el sistema</div>
+                <i class="fa fa-user-plus sc-bg-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-sm-6">
+            <div class="stat-card sc-green" style="cursor:default;">
+                <div class="sc-num counter" data-target="<?= $total_empresas ?>">0</div>
+                <div class="sc-label">Empresas</div>
+                <div class="sc-sub">Asociadas al sistema</div>
+                <i class="fa fa-building sc-bg-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-sm-6">
+            <div class="stat-card sc-amber" style="cursor:default;">
+                <div class="sc-num counter" data-target="<?= $total_grupos ?>">0</div>
+                <div class="sc-label">Grupos</div>
+                <div class="sc-sub">Categorías de contacto</div>
+                <i class="fa fa-users sc-bg-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-sm-6">
+            <a href="index.php?Pages=Listar_Contacto" class="stat-card sc-rose">
+                <div class="sc-num counter" data-target="<?= $total_contactos ?>">0</div>
+                <div class="sc-label">Contactos</div>
+                <div class="sc-sub">En tu agenda</div>
+                <i class="fa fa-address-book sc-bg-icon"></i>
+                <i class="fa fa-angle-right sc-arrow"></i>
+            </a>
+        </div>
+        <?php endif; ?>
+
     </div>
 
-    <!-- ÚLTIMOS CONTACTOS + ACCESOS RÁPIDOS -->
+    <!-- ÚLTIMOS CONTACTOS + ACCESOS RÁPIDOS / PERFIL -->
     <div class="row anim-3">
 
         <div class="col-md-8">
@@ -422,10 +518,13 @@ $ultimos = $pdo->query("
             </div>
         </div>
 
-        <!-- ACCESOS RÁPIDOS -->
+        <!-- COLUMNA DERECHA: Admin ve Accesos Rápidos, Usuario ve su perfil -->
         <div class="col-md-4">
-            <div class="recent-box" style="margin-bottom:20px;">
 
+            <?php if ($rol === "Administrador"): ?>
+
+            <!-- ACCESOS RÁPIDOS (solo admin) -->
+            <div class="recent-box" style="margin-bottom:20px;">
                 <div class="rb-header"
                     style="cursor:pointer;user-select:none;"
                     onclick="toggleAccesos()">
@@ -433,9 +532,7 @@ $ultimos = $pdo->query("
                     <h4 style="flex:1;">Accesos Rápidos</h4>
                     <i class="fa fa-angle-up toggle-arrow" id="iconoAccesos"></i>
                 </div>
-
                 <div id="cuerpoAccesos" style="padding:14px 16px;">
-
                     <a href="index.php?Pages=Contacto" class="acceso-btn">
                         <span class="ab-icon" style="background:linear-gradient(135deg,#be123c,#f43f5e);">
                             <i class="fa fa-address-book"></i>
@@ -443,7 +540,6 @@ $ultimos = $pdo->query("
                         <span class="ab-text">Nuevo Contacto</span>
                         <i class="fa fa-angle-right ab-arrow"></i>
                     </a>
-
                     <a href="index.php?Pages=Empresa" class="acceso-btn">
                         <span class="ab-icon" style="background:linear-gradient(135deg,#059669,#10b981);">
                             <i class="fa fa-building"></i>
@@ -451,7 +547,6 @@ $ultimos = $pdo->query("
                         <span class="ab-text">Nueva Empresa</span>
                         <i class="fa fa-angle-right ab-arrow"></i>
                     </a>
-
                     <a href="index.php?Pages=Operador" class="acceso-btn">
                         <span class="ab-icon" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);">
                             <i class="fa fa-user-plus"></i>
@@ -459,7 +554,6 @@ $ultimos = $pdo->query("
                         <span class="ab-text">Nuevo Operador</span>
                         <i class="fa fa-angle-right ab-arrow"></i>
                     </a>
-
                     <a href="index.php?Pages=Grupo" class="acceso-btn">
                         <span class="ab-icon" style="background:linear-gradient(135deg,#d97706,#fbbf24);">
                             <i class="fa fa-users"></i>
@@ -467,7 +561,6 @@ $ultimos = $pdo->query("
                         <span class="ab-text">Nuevo Grupo</span>
                         <i class="fa fa-angle-right ab-arrow"></i>
                     </a>
-
                     <a href="index.php?Pages=Listar_Contacto" class="acceso-btn" style="margin-bottom:0;">
                         <span class="ab-icon" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);">
                             <i class="fa fa-list"></i>
@@ -475,9 +568,47 @@ $ultimos = $pdo->query("
                         <span class="ab-text">Ver Agenda Completa</span>
                         <i class="fa fa-angle-right ab-arrow"></i>
                     </a>
-
                 </div>
             </div>
+
+            <?php else: ?>
+
+            <!-- MINI PERFIL (solo usuario normal) -->
+            <div class="recent-box" style="margin-bottom:20px;">
+                <div class="rb-header">
+                    <i class="fa fa-user-circle"></i>
+                    <h4>Mi Cuenta</h4>
+                </div>
+                <div style="padding:24px 20px;text-align:center;">
+                    <img src="<?= $_SESSION['foto'] ?? 'Views/Images/Users/default.png' ?>"
+                         class="img-circle"
+                         style="width:80px;height:80px;object-fit:cover;border:3px solid #e2e8f0;margin-bottom:14px;">
+                    <h4 style="margin:0 0 4px;font-size:16px;font-weight:700;color:#1e293b;">
+                        <?= htmlspecialchars($_SESSION["nombre"]) ?>
+                    </h4>
+                    <p style="color:#64748b;font-size:13px;margin:0 0 20px;">
+                        <i class="fa fa-circle text-success" style="font-size:9px;"></i>
+                        <?= htmlspecialchars($_SESSION["rol"]) ?>
+                    </p>
+                    <a href="index.php?Pages=Listar_Contacto" class="acceso-btn" style="margin-bottom:10px;">
+                        <span class="ab-icon" style="background:linear-gradient(135deg,#be123c,#f43f5e);">
+                            <i class="fa fa-address-book"></i>
+                        </span>
+                        <span class="ab-text">Mis Contactos</span>
+                        <i class="fa fa-angle-right ab-arrow"></i>
+                    </a>
+                    <a href="index.php?Pages=Perfil" class="acceso-btn" style="margin-bottom:0;">
+                        <span class="ab-icon" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);">
+                            <i class="fa fa-user"></i>
+                        </span>
+                        <span class="ab-text">Ver Mi Perfil</span>
+                        <i class="fa fa-angle-right ab-arrow"></i>
+                    </a>
+                </div>
+            </div>
+
+            <?php endif; ?>
+
         </div>
 
     </div>

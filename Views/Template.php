@@ -105,23 +105,32 @@ if(!isset($_SESSION["usuario"])){
 
     <?php
 
-    $paginas = [
+    /* ================================================
+       DEFINICIÓN DE PÁGINAS Y PERMISOS POR ROL
+       - paginas_admin : solo Administrador
+       - paginas_user  : cualquier usuario autenticado
+       ================================================ */
 
-      "Inicio",
-
+    $paginas_admin = [
       "Operador",
       "Empresa",
       "Grupo",
       "Contacto",
-
       "Listar_Operador",
       "Listar_Empresa",
       "Listar_Grupo",
       "Listar_Contacto",
-
-      "Perfil"  
-
     ];
+
+    $paginas_user = [
+      "Inicio",
+      "Perfil",
+      "Acceso_Denegado",
+    ];
+
+    $paginas = array_merge($paginas_admin, $paginas_user);
+
+    $rol_sesion = $_SESSION["rol"] ?? "Usuario";
 
     if(isset($_GET["Pages"])){
 
@@ -129,7 +138,12 @@ if(!isset($_SESSION["usuario"])){
 
         if(in_array($pagina, $paginas)){
 
-            include "Pages/" . $pagina . ".php";
+            /* Verificar permiso: si la página es solo admin y el usuario no lo es */
+            if(in_array($pagina, $paginas_admin) && $rol_sesion !== "Administrador"){
+                include "Pages/Acceso_Denegado.php";
+            } else {
+                include "Pages/" . $pagina . ".php";
+            }
 
         }else{
 

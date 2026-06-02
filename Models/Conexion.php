@@ -1,14 +1,16 @@
 <?php
 
-class Conexion{
+class Conexion
+{
 
-    static public function conectar(){
+    static public function conectar()
+    {
 
-        try{
+        try {
 
             $link = new PDO(
 
-                "mysql:host=localhost;dbname=bdagenda2026",
+                "mysql:host=localhost;dbname=bd_agenda2026",
                 "root",
                 ""
 
@@ -24,13 +26,9 @@ class Conexion{
             );
 
             return $link;
-
-        }catch(PDOException $e){
+        } catch (PDOException $e) {
 
             die("Error de conexión: " . $e->getMessage());
-
         }
-
     }
-
 }

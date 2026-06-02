@@ -85,10 +85,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <section class="content">
   <div class="row">
     <div class="col-md-8 col-md-offset-2">
+<<<<<<< Updated upstream
       <div class="box box-primary">
 
         <div div class="box-header with-border bg-blue">
           <h3 class="box-title text-white">
+=======
+      <div class="box box-info">
+
+        <div class="box-header with-border">
+          <h3 class="box-title">
+>>>>>>> Stashed changes
             <i class="fa fa-address-book"></i> Nuevo Contacto
           </h3>
         </div>
@@ -254,7 +261,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="index.php?Pages=Listar_Contacto" class="btn btn-default btn-lg">
               <i class="fa fa-arrow-left"></i> Cancelar
             </a>
+<<<<<<< Updated upstream
             <button type="submit" class="btn btn-primary  btn-lg">
+=======
+            <button type="submit" class="btn btn-info btn-lg">
+>>>>>>> Stashed changes
               <i class="fa fa-save"></i> Guardar
             </button>
           </div>

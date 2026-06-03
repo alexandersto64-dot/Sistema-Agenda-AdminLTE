@@ -3,40 +3,45 @@ require_once "Models/Conexion.php";
 
 $pdo = Conexion::conectar();
 $msg = '';
+$es_admin = (($_SESSION['rol'] ?? '') === 'Administrador');
 
-// EDITAR
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'editar') {
-    $id             = (int) $_POST['id_contacto'];
-    $nombres        = trim($_POST['nombres']);
-    $apellidos      = trim($_POST['apellidos']);
-    $telefono_movil = trim($_POST['telefono_movil']);
-    $correo         = trim($_POST['correo']);
-    $id_empresa     = (int) $_POST['id_empresa'];
-    $id_operador    = trim($_POST['id_operador']);
-    $id_grupo       = trim($_POST['id_grupo']);
+/* ================================================
+   EDITAR Y ELIMINAR: solo si es Administrador.
+   Si un Usuario envía POST igual se bloquea aquí.
+   ================================================ */
+if ($es_admin && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
 
-    $stmt = $pdo->prepare("
-        UPDATE contacto
-        SET nombres=?, apellidos=?, telefono_movil=?, correo=?,
-            id_empresa=?, id_operador=?, id_grupo=?
-        WHERE id_contacto=?
-    ");
-    $stmt->execute([
-        $nombres, $apellidos, $telefono_movil,
-        $correo ?: null, $id_empresa, $id_operador, $id_grupo, $id
-    ]);
-    $msg = 'El contacto fue actualizado correctamente.';
+    if ($_POST['accion'] === 'editar') {
+        $id             = (int) $_POST['id_contacto'];
+        $nombres        = trim($_POST['nombres']);
+        $apellidos      = trim($_POST['apellidos']);
+        $telefono_movil = trim($_POST['telefono_movil']);
+        $correo         = trim($_POST['correo']);
+        $id_empresa     = (int) $_POST['id_empresa'];
+        $id_operador    = trim($_POST['id_operador']);
+        $id_grupo       = trim($_POST['id_grupo']);
+
+        $stmt = $pdo->prepare("
+            UPDATE contacto
+            SET nombres=?, apellidos=?, telefono_movil=?, correo=?,
+                id_empresa=?, id_operador=?, id_grupo=?
+            WHERE id_contacto=?
+        ");
+        $stmt->execute([
+            $nombres, $apellidos, $telefono_movil,
+            $correo ?: null, $id_empresa, $id_operador, $id_grupo, $id
+        ]);
+        $msg = 'El contacto fue actualizado correctamente.';
+    }
+
+    if ($_POST['accion'] === 'eliminar') {
+        $id   = (int) $_POST['id_contacto'];
+        $stmt = $pdo->prepare("DELETE FROM contacto WHERE id_contacto=?");
+        $stmt->execute([$id]);
+        $msg = 'El contacto fue eliminado correctamente.';
+    }
 }
 
-// ELIMINAR
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'eliminar') {
-    $id   = (int) $_POST['id_contacto'];
-    $stmt = $pdo->prepare("DELETE FROM contacto WHERE id_contacto=?");
-    $stmt->execute([$id]);
-    $msg = 'El contacto fue eliminado correctamente.';
-}
-
-// ✅ Consulta directa con JOINs para incluir los IDs (la vista no los tiene)
 $contactos = $pdo->query("
     SELECT
         c.id_contacto,
@@ -57,18 +62,28 @@ $contactos = $pdo->query("
     ORDER BY c.nombres
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-$empresas   = $pdo->query("SELECT id_empresa, nombre_empresa FROM empresa ORDER BY nombre_empresa")->fetchAll(PDO::FETCH_ASSOC);
-$operadores = $pdo->query("SELECT id_operador, nombre_operador FROM operador ORDER BY nombre_operador")->fetchAll(PDO::FETCH_ASSOC);
-$grupos     = $pdo->query("SELECT id_grupo, nombre_grupo FROM grupo_contacto ORDER BY nombre_grupo")->fetchAll(PDO::FETCH_ASSOC);
+/* Solo carga los selects si es admin (para los modales de edición) */
+if ($es_admin) {
+    $empresas   = $pdo->query("SELECT id_empresa, nombre_empresa FROM empresa ORDER BY nombre_empresa")->fetchAll(PDO::FETCH_ASSOC);
+    $operadores = $pdo->query("SELECT id_operador, nombre_operador FROM operador ORDER BY nombre_operador")->fetchAll(PDO::FETCH_ASSOC);
+    $grupos     = $pdo->query("SELECT id_grupo, nombre_grupo FROM grupo_contacto ORDER BY nombre_grupo")->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
 
 <section class="content">
     <div class="box">
 
         <div class="box-header with-border">
-            <a href="index.php?page=Nuevo_Contacto" class="btn btn-primary">
-                <i class="fa fa-plus"></i> Nuevo Contacto
-            </a>
+            <?php if ($es_admin): ?>
+                <a href="index.php?Pages=Contacto" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> Nuevo Contacto
+                </a>
+            <?php else: ?>
+                <span class="text-muted" style="font-size:13px;">
+                    <i class="fa fa-eye"></i>
+                    Estás viendo la agenda en modo <strong>solo lectura</strong>.
+                </span>
+            <?php endif; ?>
         </div>
 
         <div class="box-body">
@@ -91,7 +106,9 @@ $grupos     = $pdo->query("SELECT id_grupo, nombre_grupo FROM grupo_contacto ORD
                         <th>Grupo</th>
                         <th>Celular</th>
                         <th>Correo</th>
-                        <th>Acciones</th>
+                        <?php if ($es_admin): ?>
+                            <th>Acciones</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -105,28 +122,30 @@ $grupos     = $pdo->query("SELECT id_grupo, nombre_grupo FROM grupo_contacto ORD
                             <td><?= htmlspecialchars($c['nombre_grupo']) ?></td>
                             <td><?= htmlspecialchars($c['telefono_movil']) ?></td>
                             <td><?= htmlspecialchars($c['correo'] ?? '') ?></td>
-                            <td>
-                                <button class="btn btn-warning btn-sm"
-                                    data-toggle="modal"
-                                    data-target="#modalEditar"
-                                    data-id="<?= $c['id_contacto'] ?>"
-                                    data-nombres="<?= htmlspecialchars($c['nombres']) ?>"
-                                    data-apellidos="<?= htmlspecialchars($c['apellidos']) ?>"
-                                    data-telefono="<?= htmlspecialchars($c['telefono_movil']) ?>"
-                                    data-correo="<?= htmlspecialchars($c['correo'] ?? '') ?>"
-                                    data-empresa="<?= $c['id_empresa'] ?>"
-                                    data-operador="<?= htmlspecialchars($c['id_operador']) ?>"
-                                    data-grupo="<?= htmlspecialchars($c['id_grupo']) ?>">
-                                    <i class="fa fa-pencil"></i>
-                                </button>
-                                <button class="btn btn-danger btn-sm"
-                                    data-toggle="modal"
-                                    data-target="#modalEliminar"
-                                    data-id="<?= $c['id_contacto'] ?>"
-                                    data-nombre="<?= htmlspecialchars($c['nombres'] . ' ' . $c['apellidos']) ?>">
-                                    <i class="fa fa-times"></i>
-                                </button>
-                            </td>
+                            <?php if ($es_admin): ?>
+                                <td>
+                                    <button class="btn btn-warning btn-sm"
+                                        data-toggle="modal"
+                                        data-target="#modalEditar"
+                                        data-id="<?= $c['id_contacto'] ?>"
+                                        data-nombres="<?= htmlspecialchars($c['nombres']) ?>"
+                                        data-apellidos="<?= htmlspecialchars($c['apellidos']) ?>"
+                                        data-telefono="<?= htmlspecialchars($c['telefono_movil']) ?>"
+                                        data-correo="<?= htmlspecialchars($c['correo'] ?? '') ?>"
+                                        data-empresa="<?= $c['id_empresa'] ?>"
+                                        data-operador="<?= htmlspecialchars($c['id_operador']) ?>"
+                                        data-grupo="<?= htmlspecialchars($c['id_grupo']) ?>">
+                                        <i class="fa fa-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-danger btn-sm"
+                                        data-toggle="modal"
+                                        data-target="#modalEliminar"
+                                        data-id="<?= $c['id_contacto'] ?>"
+                                        data-nombre="<?= htmlspecialchars($c['nombres'] . ' ' . $c['apellidos']) ?>">
+                                        <i class="fa fa-times"></i>
+                                    </button>
+                                </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach ?>
                 </tbody>
@@ -135,6 +154,8 @@ $grupos     = $pdo->query("SELECT id_grupo, nombre_grupo FROM grupo_contacto ORD
         </div>
     </div>
 </section>
+
+<?php if ($es_admin): ?>
 
 <!-- MODAL EDITAR -->
 <div id="modalEditar" class="modal fade" role="dialog">
@@ -166,7 +187,6 @@ $grupos     = $pdo->query("SELECT id_grupo, nombre_grupo FROM grupo_contacto ORD
                             </div>
                         </div>
                     </div>
-
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -205,7 +225,6 @@ $grupos     = $pdo->query("SELECT id_grupo, nombre_grupo FROM grupo_contacto ORD
                             </div>
                         </div>
                     </div>
-
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -280,8 +299,6 @@ $(document).on('click', '[data-target="#modalEditar"]', function () {
     $('#edit_apellidos').val($(this).attr('data-apellidos'));
     $('#edit_telefono').val($(this).attr('data-telefono'));
     $('#edit_correo').val($(this).attr('data-correo'));
-
-    // ✅ Preseleccionar los selects con los IDs correctos
     $('#edit_empresa').val($(this).attr('data-empresa'));
     $('#edit_operador').val($(this).attr('data-operador'));
     $('#edit_grupo').val($(this).attr('data-grupo'));
@@ -292,3 +309,5 @@ $(document).on('click', '[data-target="#modalEliminar"]', function () {
     $('#del_nombre').text($(this).attr('data-nombre'));
 });
 </script>
+
+<?php endif; ?>

@@ -119,12 +119,12 @@ if(!isset($_SESSION["usuario"])){
       "Listar_Operador",
       "Listar_Empresa",
       "Listar_Grupo",
-      "Listar_Contacto",
     ];
 
     $paginas_user = [
       "Inicio",
       "Perfil",
+      "Listar_Contacto",   // Usuario puede ver (solo lectura), Admin ve con botones
       "Acceso_Denegado",
     ];
 
